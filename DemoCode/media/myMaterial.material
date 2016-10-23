@@ -1,0 +1,107 @@
+material myMaterial/TexturedBoxMaterial
+{
+	technique
+	{
+		pass
+		{
+			diffuse 0.8 0.8 0.8
+			specular 0.6 0.6 0.6
+
+			texture_unit
+			{
+				texture crate.jpg
+			}
+		}
+	}
+}
+
+material myMaterial/NoTexture
+{
+	technique
+	{
+		pass
+		{
+			diffuse 0.2 0.7 1.0
+			specular 0.8 0.2 0.2
+		}
+	}
+}
+
+material myMaterial/NoLighting
+{
+	technique
+	{
+		pass
+		{
+			lighting off
+		}
+	}
+}
+
+material myMaterial/MetalPlate
+{
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture MtlPlat2.jpg
+			}
+		}
+	}
+}
+
+material myMaterial/HealthBar
+{
+	receive_shadows off
+
+	technique
+	{
+		pass
+		{
+			lighting off
+
+			texture_unit
+			{
+				texture healthbar.png
+				colour_op replace
+			}
+		}
+	}
+}
+
+material myMaterial/SelectionCircle
+{
+	receive_shadows off
+
+	technique
+	{
+		pass
+		{
+			scene_blend alpha_blend
+			depth_write off
+			lighting off
+
+			texture_unit
+			{
+				texture circulo.png
+				//colour_op alpha_blend
+			}
+		}
+	}
+}
+material Examples/Grass
+{
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture floor_diffuse.png
+				
+			}
+		}
+	}
+}
