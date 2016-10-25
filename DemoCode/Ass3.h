@@ -5,6 +5,9 @@
 #include "BaseApplication.h"
 #include "PathFinding.h"
 
+//adjustable team size
+#define TEAM_SIZE 4
+
 #include <fstream>
 #include <string>
 
@@ -29,7 +32,6 @@ public:
 	Ogre::Vector3 mDestination;
 
 	bool nextLocation();
-	/////
  
 protected:
 	virtual bool setup();
@@ -38,7 +40,6 @@ protected:
 
 	virtual bool processUnbufferedInput(const Ogre::FrameEvent& evt);
 	virtual bool frameRenderingQueued(const Ogre::FrameEvent& fe);
-
     // OIS::MouseListener
     virtual bool mouseMoved( const OIS::MouseEvent &arg );
     virtual bool mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
@@ -49,10 +50,46 @@ protected:
 	Ogre::Vector3 mDirection;     // Value to move in the correct direction
 
 private:
-	Ogre::Entity* mRobot[3];
-	Ogre::SceneNode* mRobotNode[3];
-	float mRobotHealth[3];
-	int mCurrentRobot;
+
+	
+	//Ogre::Entity* mRobot[3];
+	//Ogre::SceneNode* mRobotNode[3];
+	//float mRobotHealth[3];
+	//int mCurrentRobot;
+
+	//Team A
+	// Scene nodes for the different tank parts
+	Ogre::Entity* amTankBody[TEAM_SIZE];
+	Ogre::Entity* amTankTurret[TEAM_SIZE];
+	Ogre::Entity* amTankBarrel[TEAM_SIZE];
+	Ogre::SceneNode* amTankBodyNode[TEAM_SIZE];
+	Ogre::SceneNode* amTankTurretNode[TEAM_SIZE];
+	Ogre::SceneNode* amTankBarrelNode[TEAM_SIZE];
+	float amTankHealth[TEAM_SIZE];
+	// For tank movement and rotation
+	float amMove[TEAM_SIZE];
+	float amBodyRotate[TEAM_SIZE];
+	float amTurretRotate[TEAM_SIZE];
+	float amBarrelRotate[TEAM_SIZE];
+	float amBarrelPitch[TEAM_SIZE];
+
+	//Team B
+	// Scene nodes for the different tank parts
+	Ogre::Entity* bmTankBody[TEAM_SIZE];
+	Ogre::Entity* bmTankTurret[TEAM_SIZE];
+	Ogre::Entity* bmTankBarrel[TEAM_SIZE];
+	Ogre::SceneNode* bmTankBodyNode[TEAM_SIZE];
+	Ogre::SceneNode* bmTankTurretNode[TEAM_SIZE];
+	Ogre::SceneNode* bmTankBarrelNode[TEAM_SIZE];
+	float bmTankHealth[TEAM_SIZE];
+	// For tank movement and rotation
+	float bmMove[TEAM_SIZE];
+	float bmBodyRotate[TEAM_SIZE];
+	float bmTurretRotate[TEAM_SIZE];
+	float bmBarrelRotate[TEAM_SIZE];
+	float bmBarrelPitch[TEAM_SIZE];
+
+	int mCurrentTank;
 
 	Ogre::BillboardSet* mHealthBar;
 	Ogre::Billboard* mHealthBarBB;
@@ -67,7 +104,6 @@ private:
 	Graph* pathFindingGraph;
 	PathFinding mPathFinder;
 	Ogre::ManualObject* path1;
-	Ogre::ManualObject* path2;
 
 	void createPath(Ogre::ManualObject* line, float height, std::vector<int>& path, Ogre::ColourValue& colour);
 	void goPath(Ogre::ManualObject* line, float height, std::vector<int>& path, Ogre::ColourValue& colour);
