@@ -3,13 +3,20 @@
 #include <stdlib.h>
  
 //-------------------------------------------------------------------------------------
-Ass3::Ass3(void):
-	mDistance(0),
-	mWalkSpd(200.0),
-	mDirect(Ogre::Vector3::ZERO),
-	mDestination(Ogre::Vector3::ZERO)
+Ass3::Ass3(void)
 {
+	mWalkSpd = 500.0;
+	teamSize = 3;
 
+	for (int i = 0; i < MAX_TEAM_SIZE; i++)
+	{
+		amDistance[i] = 0;
+		bmDistance[i] = 0;
+		amDirect[i] = Ogre::Vector3::ZERO;
+		bmDirect[i] = Ogre::Vector3::ZERO;
+		amDestination[i] = Ogre::Vector3::ZERO;
+		bmDestination[i] = Ogre::Vector3::ZERO;
+	}
 }
 //-------------------------------------------------------------------------------------
 Ass3::~Ass3(void)
@@ -39,11 +46,11 @@ bool Ass3::setup(void)
 	mCurrentTank = -1;
 
 	pathFindingGraph = new Graph;
-	mCurrentState = 0;
+	//mCurrentState = 0;
 
 	mDirection = Ogre::Vector3::ZERO;
 
-	srand(time(NULL));
+	srand(std::time(NULL));
 
 	return true;
 };
@@ -106,107 +113,24 @@ void Ass3::createScene(void)
 	//mRobotNode[1]->yaw(Ogre::Degree(-90));
 	//mRobotNode[1]->translate(1300, 18, -1250);
 	// Initialise the robot's health
-	//mRobotHealth[1] = 0.5;
-	
+	//mHealth[1] = 0.5;
+
 	//create tanks
-	//team A
-	for (int i = 0; i < TEAM_SIZE; i++)
+	for (int i = 0; i < MAX_TEAM_SIZE; i++)
 	{
-		std::string bodyName = "chbodyA";
-		//char temp[3]
-		//itoa(i, temp, 10)
-		//entityName += temp;
-		bodyName += std::to_string(i);
-		amTankBody[i] = mSceneMgr->createEntity(bodyName, "chbody.mesh");
-		amTankBody[i]->setCastShadows(true);
-		amTankBody[i]->setMaterialName("ch_tank_material");
-
-		// Create tank turret entity
-		std::string turretName = "chturretA";
-		turretName += std::to_string(i);
-		amTankTurret[i] = mSceneMgr->createEntity(turretName, "chturret.mesh");
-		amTankTurret[i]->setCastShadows(true);
-		amTankTurret[i]->setMaterialName("ch_tank_material");
-
-		// Create tank barrel entity
-		std::string barrelName = "chbarrelA";
-		barrelName += std::to_string(i);
-		amTankBarrel[i] = mSceneMgr->createEntity(barrelName, "chbarrel.mesh");
-		amTankBarrel[i]->setCastShadows(true);
-		amTankBarrel[i]->setMaterialName("ch_tank_material");
-
-		//get a random spawn point for team A
-		int x = (rand() % 100) - 1350;
-		int z = rand() % 2500;
-		if (z > 1250) { z -= 2500; }
-
-		// Create a child scene node and attach tank body to it
-		amTankBodyNode[i] = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		amTankBodyNode[i]->attachObject(amTankBody[i]);
-		// Move it above the ground
-		amTankBodyNode[i]->translate(x, 18, z);
-
-		// Create a child scene node from tank body's scene node and attach the tank turret to it
-		amTankTurretNode[i] = amTankBodyNode[i]->createChildSceneNode();
-		amTankTurretNode[i]->attachObject(amTankTurret[i]);
-		// Move it above tank body
-		amTankTurretNode[i]->translate(0, 3, 0);
-
-		// Create a child scene node from tank turret's scene node and attach the tank barrel to it
-		amTankBarrelNode[i] = amTankTurretNode[i]->createChildSceneNode();
-		amTankBarrelNode[i] ->attachObject(amTankBarrel[i]);
-		// Move it to the appropriate position on the turret
-		amTankBarrelNode[i] ->translate(-30, 10, 0);
+		//team A
+		createTank(0,i);
+		//team B
+		createTank(1,i);
 	}
 
-	//team B
-	for (int i = 0; i < TEAM_SIZE; i++)
+	//spawn tanks
+	for (int i = 0; i < teamSize; i++)
 	{
-		std::string bodyName = "chbodyB";
-		//char temp[3]
-		//itoa(i, temp, 10)
-		//entityName += temp;
-		bodyName += std::to_string(i);
-		bmTankBody[i] = mSceneMgr->createEntity(bodyName, "chbody.mesh");
-		bmTankBody[i]->setCastShadows(true);
-		bmTankBody[i]->setMaterialName("ch_tank_material");
-
-		// Create tank turret entity
-		std::string turretName = "chturretB";
-		turretName += std::to_string(i);
-		bmTankTurret[i] = mSceneMgr->createEntity(turretName, "chturret.mesh");
-		bmTankTurret[i]->setCastShadows(true);
-		bmTankTurret[i]->setMaterialName("ch_tank_material");
-
-		// Create tank barrel entity
-		std::string barrelName = "chbarrelB";
-		barrelName += std::to_string(i);
-		bmTankBarrel[i] = mSceneMgr->createEntity(barrelName, "chbarrel.mesh");
-		bmTankBarrel[i]->setCastShadows(true);
-		bmTankBarrel[i]->setMaterialName("ch_tank_material");
-
-		//get a random spawn point for team B
-		int x = (rand() % 100) + 1250;
-		int z = rand() % 2500;
-		if (z > 1250) { z -= 2500; }
-
-		// Create a child scene node and attach tank body to it
-		bmTankBodyNode[i] = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		bmTankBodyNode[i]->attachObject(bmTankBody[i]);
-		// Move it above the ground
-		bmTankBodyNode[i]->translate(x, 18, z);
-
-		// Create a child scene node from tank body's scene node and attach the tank turret to it
-		bmTankTurretNode[i] = bmTankBodyNode[i]->createChildSceneNode();
-		bmTankTurretNode[i]->attachObject(bmTankTurret[i]);
-		// Move it above tank body
-		bmTankTurretNode[i]->translate(0, 3, 0);
-
-		// Create a child scene node from tank turret's scene node and attach the tank barrel to it
-		bmTankBarrelNode[i] = bmTankTurretNode[i]->createChildSceneNode();
-		bmTankBarrelNode[i] ->attachObject(bmTankBarrel[i]);
-		// Move it to the appropriate position on the turret
-		bmTankBarrelNode[i] ->translate(-30, 10, 0);
+		//team A
+		spawnTank(0,i);
+		//team B
+		spawnTank(1,i);
 	}
 
 	// Create a BillboardSet to represent a health bar and set its properties
@@ -269,16 +193,23 @@ void Ass3::createScene(void)
 	}
 
 	// create the path object, and clear it to start off
-
-	path1 = mSceneMgr->createManualObject("AStarPath");
-	path1->clear();
-	mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(path1);
+	for (int i = 0; i < MAX_TEAM_SIZE; i++)
+	{
+		std::string apathName = "apath"; std::string bpathName = "bpath";
+		apathName += std::to_string(i); bpathName += std::to_string(i);
+		apath[i] = mSceneMgr->createManualObject(apathName);
+		bpath[i] = mSceneMgr->createManualObject(bpathName);
+		apath[i]->clear();
+		bpath[i]->clear();
+		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(apath[i]);
+		mSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(bpath[i]);
+	}	
 }
 
 bool Ass3::processUnbufferedInput(const Ogre::FrameEvent& evt)
 {
 	Ogre::Vector3 transVector = Ogre::Vector3::ZERO;
-	mMoveScale = 250;
+	mMoveScale = 750;
 	mZoomScale = 20000;
 	
 	if(mMouse->getMouseState().X.abs > (mWindow->getWidth() - 20)) 
@@ -316,56 +247,30 @@ bool Ass3::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	bool ret = BaseApplication::frameRenderingQueued(evt);
 	processUnbufferedInput(evt);
 
-	//debug code to check random spawn locations every frame
-	/*
-	int x = (rand() % 100) - 1350;
-	int z = rand() % 2500;
-	if (z > 1250) { z -= 2500; }
-	amTankBodyNode[0]->setPosition(x, 18, z);
-	x = (rand() % 100) + 1250;
-	z = rand() % 2500;
-	if (z > 1250) { z -= 2500; }
-	bmTankBodyNode[0]->setPosition(x, 18, z);
-	*/
 
-	if(mDirect == Ogre::Vector3::ZERO)
+
+	for (int i = 0; i < teamSize; i++)
 	{
-		if(nextLocation())
-		{
-		}
-
+			moveTank(0,i,evt.timeSinceLastFrame);
+			moveTank(1,i,evt.timeSinceLastFrame);
 	}
-	else
+
+	//display healthbar if a tank is selected
+	if (mCurrentTank != -1)
 	{
-		Ogre::Real move = mWalkSpd * evt.timeSinceLastFrame;
-		mDistance -= move;
-
-		if(mDistance <= 0.0)
+		if (mCurrentTank < MAX_TEAM_SIZE) //team A tank selected
 		{
-			amTankBodyNode[mCurrentTank]->setPosition(mDestination);
-			mDirect = Ogre::Vector3::ZERO;
-
-			if(nextLocation())
-			{
-				Ogre::Vector3 src = amTankBodyNode[mCurrentTank]->getOrientation() * Ogre::Vector3::UNIT_X;
-				if((1.0 + src.dotProduct(mDirect)) < 0.0001)
-				{
-					amTankBodyNode[mCurrentTank]->yaw(Ogre::Degree(180));
-				}
-				else
-				{
-					Ogre::Quaternion quat = src.getRotationTo(mDirect);
-					amTankBodyNode[mCurrentTank]->rotate(quat);
-				}
-			}
-			else
-			{
-				//idle
-			}
+			// Calculate the health bar adjustments
+			float healthBarAdjuster = (1.0 - amTankHealth[mCurrentTank])/2;	// This must range from 0.0 to 0.5
+			// Set the health bar to the appropriate level
+			mHealthBarBB->setTexcoordRect(0.0 + healthBarAdjuster, 0.0, 0.5 + healthBarAdjuster, 1.0);
 		}
-		else
+		else //team B tank selected
 		{
-			amTankBodyNode[mCurrentTank]->translate(move * mDirect);
+			// Calculate the health bar adjustments
+			float healthBarAdjuster = (1.0 - bmTankHealth[mCurrentTank - MAX_TEAM_SIZE])/2;	// This must range from 0.0 to 0.5
+			// Set the health bar to the appropriate level
+			mHealthBarBB->setTexcoordRect(0.0 + healthBarAdjuster, 0.0, 0.5 + healthBarAdjuster, 1.0);
 		}
 	}
 
@@ -393,7 +298,146 @@ bool Ass3::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id )
 
 	switch (id)
 	{
-			case OIS::MB_Middle:
+		case OIS::MB_Left:
+			{
+
+				//mCurrentState = 0;
+
+				// Get the mouse ray, i.e. ray from the mouse cursor 'into' the screen 
+				Ogre::Ray mouseRay = mCamera->getCameraToViewportRay(
+					static_cast<float>(mMouse->getMouseState().X.abs)/mMouse->getMouseState().width, 
+					static_cast<float>(mMouse->getMouseState().Y.abs)/mMouse->getMouseState().height);
+
+				Ogre::RaySceneQuery * mRaySceneQuery = mSceneMgr->createRayQuery(mouseRay);
+
+				// Set type of objects to query
+				mRaySceneQuery->setQueryTypeMask(Ogre::SceneManager::ENTITY_TYPE_MASK);
+			
+				mRaySceneQuery->setSortByDistance(true);
+
+				// Ray-cast and get first hit
+				Ogre::RaySceneQueryResult &result = mRaySceneQuery->execute();
+				Ogre::RaySceneQueryResult::iterator itr = result.begin();
+
+				// If hit a movable object
+				if(itr != result.end() && itr->movable)
+				{
+
+					// Store previously selected tank
+					int previous = mCurrentTank;
+
+					// Get name of movable object that was hit
+					Ogre::String name = itr->movable->getName();
+
+					// Check name with selectable entity names and set selected tank
+					bool found = false;
+					int i = 0;
+					while (i < MAX_TEAM_SIZE && !found)
+					{
+						//team A clicked
+						std::string body = "chbodyA", turret = "chturretA", barrel = "chbarrelA";
+						body += std::to_string(i); turret += std::to_string(i); barrel += std::to_string(i); 
+						if (name == body || name == turret || name == barrel)
+						{
+							mCurrentTank = i;
+							found = true;
+						}
+						else //team B clicked
+						{
+							body = "chbodyB", turret = "chturretB", barrel = "chbarrelB";
+							body += std::to_string(i); turret += std::to_string(i); barrel += std::to_string(i);
+							if (name == body || name == turret || name == barrel)
+							{
+								mCurrentTank = i + MAX_TEAM_SIZE;
+								found = true;
+							}
+							else //not-tank clicked
+							{ mCurrentTank = -1; }
+						}
+						i++;
+					}
+
+					// If there was a previously selected tank
+					if(previous != -1)
+					{
+						if (previous < MAX_TEAM_SIZE) //team A
+						{
+							// Detach the healthbar and selection circle
+							amTankBodyNode[previous]->detachObject(mHealthBar);
+							amTankBodyNode[previous]->detachObject(mSelectionCircle);
+						}
+						else //team B
+						{
+							// Detach the healthbar and selection circle
+							bmTankBodyNode[previous - MAX_TEAM_SIZE]->detachObject(mHealthBar);
+							bmTankBodyNode[previous - MAX_TEAM_SIZE]->detachObject(mSelectionCircle);
+						}
+					}
+
+					// If there is a selected tank
+					if(mCurrentTank > -1)
+					{
+						if (mCurrentTank < MAX_TEAM_SIZE) //team A tank selected
+						{
+							// Calculate the health bar adjustments
+							float healthBarAdjuster = (1.0 - amTankHealth[mCurrentTank])/2;	// This must range from 0.0 to 0.5
+							// Set the health bar to the appropriate level
+							mHealthBarBB->setTexcoordRect(0.0 + healthBarAdjuster, 0.0, 0.5 + healthBarAdjuster, 1.0);
+
+							// Attach the healthbar and selection circle
+							amTankBodyNode[mCurrentTank]->attachObject(mHealthBar);
+							amTankBodyNode[mCurrentTank]->attachObject(mSelectionCircle);
+						}
+						else //team B tank selected
+						{
+							// Calculate the health bar adjustments
+							float healthBarAdjuster = (1.0 - bmTankHealth[mCurrentTank - MAX_TEAM_SIZE])/2;	// This must range from 0.0 to 0.5
+							// Set the health bar to the appropriate level
+							mHealthBarBB->setTexcoordRect(0.0 + healthBarAdjuster, 0.0, 0.5 + healthBarAdjuster, 1.0);
+
+							// Attach the healthbar and selection circle
+							bmTankBodyNode[mCurrentTank - MAX_TEAM_SIZE]->attachObject(mHealthBar);
+							bmTankBodyNode[mCurrentTank - MAX_TEAM_SIZE]->attachObject(mSelectionCircle);
+						}
+
+						Ogre::Vector3 location = mouseRay.getPoint(itr->distance);
+
+						//if(mCurrentState == 0)
+						//{
+						//	// set start node
+						//	startNode = pathFindingGraph->getNode(location);
+						//	// set state to goal node state
+						//	mCurrentState++;
+						//}
+					}
+				}
+				// If nothing selected
+				else
+				{
+					// Nothing selected and there is a previously selected tank
+					if(mCurrentTank != -1)
+					{
+						if (mCurrentTank < MAX_TEAM_SIZE) //team A
+						{
+							// Detach the healthbar and selection circle
+							amTankBodyNode[mCurrentTank]->detachObject(mHealthBar);
+							amTankBodyNode[mCurrentTank]->detachObject(mSelectionCircle);
+						}
+						else //team B
+						{
+							// Detach the healthbar and selection circle
+							bmTankBodyNode[mCurrentTank - MAX_TEAM_SIZE]->detachObject(mHealthBar);
+							bmTankBodyNode[mCurrentTank - MAX_TEAM_SIZE]->detachObject(mSelectionCircle);
+						}
+
+						// Set to no tank selected
+						mCurrentTank = -1;
+					}
+				}
+			}
+			break;
+		/*
+			case OIS::MB_Right:
 			{
 				// if path already exists
 				if(mCurrentState > 1)
@@ -470,158 +514,52 @@ bool Ass3::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id )
 				}
 			}
 			break;
-		case OIS::MB_Left:
+		*/
+		default:
+			break;
+	}
+	return true;
+}
+
+bool Ass3::keyPressed( const OIS::KeyEvent &arg)
+{
+	BaseApplication::keyPressed(arg);
+
+	Ogre::Vector3 randDest = Ogre::Vector3(0,18,0);
+
+	switch (arg.key)
+	{
+		case OIS::KC_ADD:
+			if (teamSize < MAX_TEAM_SIZE)
 			{
-
-				mCurrentState = 0;
-				path1->clear();
-
-				// Get the mouse ray, i.e. ray from the mouse cursor 'into' the screen 
-				Ogre::Ray mouseRay = mCamera->getCameraToViewportRay(
-					static_cast<float>(mMouse->getMouseState().X.abs)/mMouse->getMouseState().width, 
-					static_cast<float>(mMouse->getMouseState().Y.abs)/mMouse->getMouseState().height);
-
-				Ogre::RaySceneQuery * mRaySceneQuery = mSceneMgr->createRayQuery(mouseRay);
-
-				// Set type of objects to query
-				mRaySceneQuery->setQueryTypeMask(Ogre::SceneManager::ENTITY_TYPE_MASK);
-			
-				mRaySceneQuery->setSortByDistance(true);
-
-				// Ray-cast and get first hit
-				Ogre::RaySceneQueryResult &result = mRaySceneQuery->execute();
-				Ogre::RaySceneQueryResult::iterator itr = result.begin();
-
-				// If hit a movable object
-				if(itr != result.end() && itr->movable)
-				{
-
-					// Store previously selected tank
-					int previous = mCurrentTank;
-
-					// Get name of movable object that was hit
-					Ogre::String name = itr->movable->getName();
-
-					// Check name with selectable entity names and set selected robot
-					bool found = false;
-					for (int i = 0; i < TEAM_SIZE; i++)
-					{
-						if (!found)
-						{
-							//team A
-							std::string body = "chbodyA", turret = "chturretA", barrel = "chbarrelA";
-							body += std::to_string(i); turret += std::to_string(i); barrel += std::to_string(i); 
-							if (name == body || name == turret || name == barrel)
-							{
-								mCurrentTank = i;
-								found = true;
-							}
-							else
-							{
-								//team B TODO work out indexing, selects team A for now
-								body = "chbodyB", turret = "chturretB", barrel = "chbarrelB";
-								body += std::to_string(i); turret += std::to_string(i); barrel += std::to_string(i);
-								if (name == body || name == turret || name == barrel)
-								{
-									mCurrentTank = i + TEAM_SIZE;
-									found = true;
-								}
-								else
-								{ mCurrentTank = -1; }
-							}
-						}
-					}
-
-					// If there was a previously selected robot
-					if(previous != -1)
-					{
-						if (previous < TEAM_SIZE) //team A
-						{
-							// Detach the healthbar and selection circle
-							amTankBodyNode[previous]->detachObject(mHealthBar);
-							amTankBodyNode[previous]->detachObject(mSelectionCircle);
-						}
-						else //team B
-						{
-							// Detach the healthbar and selection circle
-							bmTankBodyNode[previous - TEAM_SIZE]->detachObject(mHealthBar);
-							bmTankBodyNode[previous - TEAM_SIZE]->detachObject(mSelectionCircle);
-						}
-					}
-
-					// If there is a selected robot
-					if(mCurrentTank > -1)
-					{
-						if (mCurrentTank < TEAM_SIZE) //team A tank selected
-						{
-							// Calculate the health bar adjustments
-							float healthBarAdjuster = (1.0 - amTankHealth[mCurrentTank])/2;	// This must range from 0.0 to 0.5
-							// Set the health bar to the appropriate level
-							mHealthBarBB->setTexcoordRect(0.0 + healthBarAdjuster, 0.0, 0.5 + healthBarAdjuster, 1.0);
-
-							// Attach the healthbar and selection circle
-							amTankBodyNode[mCurrentTank]->attachObject(mHealthBar);
-							amTankBodyNode[mCurrentTank]->attachObject(mSelectionCircle);
-
-							Ogre::Vector3 location = mouseRay.getPoint(itr->distance);
-
-							if(mCurrentState == 0)
-							{
-								// set start node
-								startNode = pathFindingGraph->getNode(location);
-								// set state to goal node state
-								mCurrentState++;
-							}
-						}
-						else //team B tank selected
-						{
-							// Calculate the health bar adjustments
-							float healthBarAdjuster = (1.0 - bmTankHealth[mCurrentTank - TEAM_SIZE])/2;	// This must range from 0.0 to 0.5
-							// Set the health bar to the appropriate level
-							mHealthBarBB->setTexcoordRect(0.0 + healthBarAdjuster, 0.0, 0.5 + healthBarAdjuster, 1.0);
-
-							// Attach the healthbar and selection circle
-							bmTankBodyNode[mCurrentTank - TEAM_SIZE]->attachObject(mHealthBar);
-							bmTankBodyNode[mCurrentTank - TEAM_SIZE]->attachObject(mSelectionCircle);
-
-							Ogre::Vector3 location = mouseRay.getPoint(itr->distance);
-
-							if(mCurrentState == 0)
-							{
-								// set start node
-								startNode = pathFindingGraph->getNode(location);
-								// set state to goal node state
-								mCurrentState++;
-							}
-						}
-					}
-				}
-				// If nothing selected
-				else
-				{
-					// Nothing selected and there is a previously selected robot
-					if(mCurrentTank != -1)
-					{
-						if (mCurrentTank < TEAM_SIZE) //team A
-						{
-							// Detach the healthbar and selection circle
-							amTankBodyNode[mCurrentTank]->detachObject(mHealthBar);
-							amTankBodyNode[mCurrentTank]->detachObject(mSelectionCircle);
-						}
-						else //team B
-						{
-							// Detach the healthbar and selection circle
-							bmTankBodyNode[mCurrentTank - TEAM_SIZE]->detachObject(mHealthBar);
-							bmTankBodyNode[mCurrentTank - TEAM_SIZE]->detachObject(mSelectionCircle);
-						}
-
-						// Set to no robot selected
-						mCurrentTank = -1;
-					}
-				}
+				spawnTank(0,teamSize);
+				amTankState[teamSize] = 1;
+				spawnTank(1,teamSize);
+				bmTankState[teamSize] = 1;
+				teamSize++;
 			}
 			break;
+		case OIS::KC_SUBTRACT:
+			if (teamSize > 1)
+			{
+				teamSize--;
+				amTankHealth[teamSize] = 0.0;
+				amTankBodyNode[teamSize]->setPosition(-1350, -50, (100 * teamSize));
+				amTankState[teamSize] = 0;
+				apath[teamSize]->clear();
+				agoalNode[teamSize] = astartNode[teamSize] = -1;
 
+				bmTankHealth[teamSize] = 0.0;
+				bmTankBodyNode[teamSize]->setPosition(1250, -50, (100 * teamSize));
+				bmTankState[teamSize] = 0;
+				bpath[teamSize]->clear();
+				bgoalNode[teamSize] = bstartNode[teamSize] = -1;
+
+			}
+			break;
+		case OIS::KC_SPACE:
+				pathTank(0,0,randDest);
+			break;
 		default:
 			break;
 	}
@@ -629,7 +567,7 @@ bool Ass3::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id )
 	return true;
 }
 
-void Ass3::goPath(Ogre::ManualObject* line, float height, std::vector<int>& path, Ogre::ColourValue& colour)
+void Ass3::goPath(Ogre::ManualObject* line, float height, std::vector<int>& path, Ogre::ColourValue& colour, int team, int tank)
 {
 	line->clear();
 	line->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
@@ -639,25 +577,339 @@ void Ass3::goPath(Ogre::ManualObject* line, float height, std::vector<int>& path
 	{
 		
 		position = pathFindingGraph->getPosition(*it);
-		Ogre::Vector3 temp(position.x, 0, position.z);
-		mWalkList.push_back(temp);
+		Ogre::Vector3 temp(position.x, 18, position.z);
+		if (team == 0)
+			amWalkList[tank].push_back(temp);
+		else
+			bmWalkList[tank].push_back(temp);
 	}
-
 
 	// Finished defining line
 	line->end();
 }
 
-bool Ass3::nextLocation()
+bool Ass3::nextLocation(int team, int tank)
 {
-	if(mWalkList.empty())
-		return false;
-	mDestination = mWalkList.front();
-	mWalkList.pop_front();
-	mDirect = mDestination - amTankBodyNode[mCurrentTank]->getPosition();
-	mDistance = mDirect.normalise();
-	return true;
+	if (team == 0)
+	{
+		if(amWalkList[tank].empty())
+			return false;
+		amDestination[tank] = amWalkList[tank].front();
+		amWalkList[tank].pop_front();
+		amDirect[tank] = amDestination[tank] - amTankBodyNode[tank]->getPosition();
+		amDistance[tank] = amDirect[tank].normalise();
+		return true;
+	}
+	else
+	{
+		if(bmWalkList[tank].empty())
+			return false;
+		bmDestination[tank] = bmWalkList[tank].front();
+		bmWalkList[tank].pop_front();
+		bmDirect[tank] = bmDestination[tank] - bmTankBodyNode[tank]->getPosition();
+		bmDistance[tank] = bmDirect[tank].normalise();
+		return true;
+	}
 }
+
+//initial creation
+void Ass3::createTank(int team, int tank) 
+{
+	if (team == 0) //Team A
+	{
+		std::string bodyName = "chbodyA";
+		//char temp[3]
+		//itoa(i, temp, 10)
+		//entityName += temp;
+		bodyName += std::to_string(tank);
+		amTankBody[tank] = mSceneMgr->createEntity(bodyName, "chbody.mesh");
+		amTankBody[tank]->setCastShadows(true);
+		amTankBody[tank]->setMaterialName("ch_tank_material");
+
+		// Create tank turret entity
+		std::string turretName = "chturretA";
+		turretName += std::to_string(tank);
+		amTankTurret[tank] = mSceneMgr->createEntity(turretName, "chturret.mesh");
+		amTankTurret[tank]->setCastShadows(true);
+		amTankTurret[tank]->setMaterialName("ch_tank_material");
+
+		// Create tank barrel entity
+		std::string barrelName = "chbarrelA";
+		barrelName += std::to_string(tank);
+		amTankBarrel[tank] = mSceneMgr->createEntity(barrelName, "chbarrel.mesh");
+		amTankBarrel[tank]->setCastShadows(true);
+		amTankBarrel[tank]->setMaterialName("ch_tank_material");
+
+		// Create a child scene node and attach tank body to it
+		amTankBodyNode[tank] = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+		Ogre::SceneNode * temp = amTankBodyNode[tank]->createChildSceneNode();
+		temp->attachObject(amTankBody[tank]);
+		// spawn it below the ground initially
+		amTankBodyNode[tank]->translate(-1350, -50, (100 * tank));
+
+		// Create a child scene node from tank body's scene node and attach the tank turret to it
+		amTankTurretNode[tank] = temp->createChildSceneNode();
+		amTankTurretNode[tank]->attachObject(amTankTurret[tank]);
+		// Move it above tank body
+		amTankTurretNode[tank]->translate(0, 3, 0);
+
+		// Create a child scene node from tank turret's scene node and attach the tank barrel to it
+		amTankBarrelNode[tank] = amTankTurretNode[tank]->createChildSceneNode();
+		amTankBarrelNode[tank] ->attachObject(amTankBarrel[tank]);
+		// Move it to the appropriate position on the turret
+		amTankBarrelNode[tank] ->translate(-30, 10, 0);
+
+		temp->rotate(Ogre::Quaternion(0,0,1,0));
+
+		amTankState[tank] = 0; //initialise to dead state
+	}
+	else //team B
+	{
+		std::string bodyName = "chbodyB";
+		//char temp[3]
+		//itoa(i, temp, 10)
+		//entityName += temp;
+		bodyName += std::to_string(tank);
+		bmTankBody[tank] = mSceneMgr->createEntity(bodyName, "chbody.mesh");
+		bmTankBody[tank]->setCastShadows(true);
+		bmTankBody[tank]->setMaterialName("ch_tank_material");
+
+		// Create tank turret entity
+		std::string turretName = "chturretB";
+		turretName += std::to_string(tank);
+		bmTankTurret[tank] = mSceneMgr->createEntity(turretName, "chturret.mesh");
+		bmTankTurret[tank]->setCastShadows(true);
+		bmTankTurret[tank]->setMaterialName("ch_tank_material");
+
+		// Create tank barrel entity
+		std::string barrelName = "chbarrelB";
+		barrelName += std::to_string(tank);
+		bmTankBarrel[tank] = mSceneMgr->createEntity(barrelName, "chbarrel.mesh");
+		bmTankBarrel[tank]->setCastShadows(true);
+		bmTankBarrel[tank]->setMaterialName("ch_tank_material");
+
+		// Create a child scene node and attach tank body to it
+		bmTankBodyNode[tank] = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+		Ogre::SceneNode * temp = bmTankBodyNode[tank]->createChildSceneNode();
+		temp->attachObject(bmTankBody[tank]);
+		// spawn it below the ground initially
+		bmTankBodyNode[tank]->translate(1250, -50, (100 * tank));
+
+		// Create a child scene node from tank body's scene node and attach the tank turret to it
+		bmTankTurretNode[tank] = temp->createChildSceneNode();
+		bmTankTurretNode[tank]->attachObject(bmTankTurret[tank]);
+		// Move it above tank body
+		bmTankTurretNode[tank]->translate(0, 3, 0);
+
+		// Create a child scene node from tank turret's scene node and attach the tank barrel to it
+		bmTankBarrelNode[tank] = bmTankTurretNode[tank]->createChildSceneNode();
+		bmTankBarrelNode[tank] ->attachObject(bmTankBarrel[tank]);
+		// Move it to the appropriate position on the turret
+		bmTankBarrelNode[tank] ->translate(-30, 10, 0);
+
+		temp->rotate(Ogre::Quaternion(0,0,1,0));
+
+		bmTankState[tank] = 0; //initialise to dead state
+	}
+}
+
+//spawning / respawning
+void Ass3::spawnTank(int team, int tank)
+{
+	if (team == 0) //Team A
+	{
+		//get entity name
+		//std::string entName = "chbodyA";
+		//entName += std::to_string(tank);
+
+		//get a random spawn point for team A
+		int x = (rand() % 100) - 1350;
+		int z = rand() % 2500;
+		if (z > 1250) { z -= 2500; }
+
+		amTankHealth[tank] = 1.0;
+		amTankBodyNode[tank]->setPosition(x,18,z);
+		amTankState[tank] = 1; //set to idle state
+	}
+	else //Team B
+	{
+		//get a random spawn point for team B
+		int x = (rand() % 100) + 1250;
+		int z = rand() % 2500;
+		if (z > 1250) { z -= 2500; }
+
+		bmTankHealth[tank] = 1.0;
+		bmTankBodyNode[tank]->setPosition(x,18,z);
+		bmTankState[tank] = 1; //set to idle state
+	}
+}
+
+void Ass3::pathTank(int team, int tank, Ogre::Vector3 destination)
+{
+	//clear previous path if exists
+	// set start node to tanks current position
+	if(team == 0) //team A
+	{
+		apath[tank]->clear();
+		astartNode[tank] = pathFindingGraph->getNode(amTankBodyNode[tank]->getPosition());
+
+		// set goal node
+		agoalNode[tank] = pathFindingGraph->getNode(destination);
+
+		// check that goal node is not the same as start node
+		if(agoalNode[tank] != astartNode[tank])
+		{
+			// try to find path from start to goal node
+			std::vector<int> path;
+
+			// if path exists
+			if(mPathFinder.AStar(astartNode[tank], agoalNode[tank], *pathFindingGraph, path))
+			{
+				// draw path
+				goPath(apath[tank], 0.5, path, Ogre::ColourValue(1, 0, 0), team, tank);
+			}
+		}
+	}
+	else //team B
+	{
+		bpath[tank]->clear();
+		bstartNode[tank] = pathFindingGraph->getNode(bmTankBodyNode[tank]->getPosition());
+
+		// set goal node
+		bgoalNode[tank] = pathFindingGraph->getNode(destination);
+
+		// check that goal node is not the same as start node
+		if(bgoalNode[tank] != bstartNode[tank])
+		{
+			// try to find path from start to goal node
+			std::vector<int> path;
+
+			// if path exists
+			if(mPathFinder.AStar(bstartNode[tank], bgoalNode[tank], *pathFindingGraph, path))
+			{
+				// draw path
+				goPath(bpath[tank], 0.5, path, Ogre::ColourValue(1, 0, 0), team, tank);
+			}
+		}
+	}
+
+	
+}
+
+void Ass3::moveTank(int team, int tank, Ogre::Real tslf)
+{
+	if (team == 0) //team A
+	{
+		if(amDirect[tank] == Ogre::Vector3::ZERO)
+		{
+			if(!nextLocation(0,tank))
+			{
+				amTankState[tank] = 1;
+			}
+		}
+		else
+		{
+			Ogre::Real move = mWalkSpd * tslf;
+			amDistance[tank] -= move;
+
+			if(amDistance[tank] < 0.0)
+			{
+				amTankBodyNode[tank]->setPosition(amDestination[tank]);
+				amDirect[tank] = Ogre::Vector3::ZERO;
+
+				if(nextLocation(0,tank))
+				{
+					Ogre::Vector3 src = amTankBodyNode[tank]->getOrientation() * Ogre::Vector3::UNIT_X;
+					if((1.0 + src.dotProduct(amDirect[tank])) < 0.0001)
+					{
+						//NOTE commenting this out makes tanks reverse?
+						//amTankBodyNode[tank]->yaw(Ogre::Degree(180)); 
+					}
+					else
+					{
+						Ogre::Quaternion quat = src.getRotationTo(amDirect[tank]);
+						amTankBodyNode[tank]->rotate(quat);
+					}
+				}
+				else
+				{
+					amTankState[tank] = 1;
+				}
+			}
+			else
+			{
+				amTankBodyNode[tank]->translate(move * amDirect[tank]);
+			}
+		}
+		if (amTankState[tank] == 1)
+		{
+			amTankState[tank] = 2;
+			int x = rand() % 1000;
+			int z = rand() % 2500;
+			if (x > 500)  { x -= 1000; }
+			if (z > 1250) { z -= 2500; }
+			Ogre::Vector3 randDest = Ogre::Vector3(x,18,z);
+			pathTank(team,tank,randDest);
+		}
+	}
+	else //team B
+	{
+		if(bmDirect[tank] == Ogre::Vector3::ZERO)
+		{
+			if(!nextLocation(1,tank))
+			{
+				bmTankState[tank] = 1;
+			}
+		}
+		else
+		{
+			Ogre::Real move = mWalkSpd * tslf;
+			bmDistance[tank] -= move;
+
+			if(bmDistance[tank] < 0.0)
+			{
+				bmTankBodyNode[tank]->setPosition(bmDestination[tank]);
+				bmDirect[tank] = Ogre::Vector3::ZERO;
+
+				if(nextLocation(1,tank))
+				{
+					Ogre::Vector3 src = bmTankBodyNode[tank]->getOrientation() * Ogre::Vector3::UNIT_X;
+					if((1.0 + src.dotProduct(bmDirect[tank])) < 0.0001)
+					{
+						//NOTE commenting this out makes tanks reverse?
+						//bmTankBodyNode[tank]->yaw(Ogre::Degree(180)); 
+					}
+					else
+					{
+						Ogre::Quaternion quat = src.getRotationTo(bmDirect[tank]);
+						bmTankBodyNode[tank]->rotate(quat);
+					}
+				}
+				else
+				{
+					bmTankState[tank] = 1;
+				}
+			}
+			else
+			{
+				bmTankBodyNode[tank]->translate(move * bmDirect[tank]);
+			}
+		}
+
+
+		if (bmTankState[tank] == 1)
+		{
+			bmTankState[tank] = 2;
+			int x = rand() % 1000;
+			int z = rand() % 2500;
+			if (x > 500)  { x -= 1000; }
+			if (z > 1250) { z -= 2500; }
+			Ogre::Vector3 randDest = Ogre::Vector3(x,18,z);
+			pathTank(team,tank,randDest);
+		}
+	}
+}
+
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #define WIN32_LEAN_AND_MEAN
